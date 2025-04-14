@@ -88,7 +88,7 @@ def scipy_newton_cg(f, x0, eps=1e-6, max_iter=100):
     res = minimize(f, x0, method='Newton-CG',
                    jac=lambda x: gradient(f, x),
                    options={'xtol': eps})
-    print(f"Newton-CG: {res.message}, iterations: {res.nit}")
+    print(f"Newton-CG: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}, hes: {res.nhev}")
     return res.x
 
 
@@ -96,7 +96,7 @@ def scipy_bfgs(f, x0, eps=1e-6, max_iter=100):
     res = minimize(f, x0, method='BFGS',
                    jac=lambda x: gradient(f, x),
                    options={'gtol': eps})
-    print(f"BFGS: {res.message}, iterations: {res.nit}")
+    print(f"BFGS: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}")
     return res.x
 
 
@@ -104,7 +104,7 @@ def scipy_lbfgs(f, x0, eps=1e-6, max_iter=100):
     res = minimize(f, x0, method='L-BFGS-B',
                    jac=lambda x: gradient(f, x),
                    options={'ftol': eps})
-    print(f"L-BFGS: {res.message}, iterations: {res.nit}")
+    print(f"L-BFGS: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}")
     return res.x
 
 
