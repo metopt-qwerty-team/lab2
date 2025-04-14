@@ -61,7 +61,33 @@ def dichotomy_step(f, x, direction, a=0, b=1, eps=1e-5, c=10):
         else:
             b = x2
 
+    print((a + b) / 2)
     return (a + b) / 2
+
+
+def wolfe_step(f, x_k, grad, d_k, a=1, c_1=0.1, c_2=0.9, max_iter=20):
+    f_x_k = f(x_k)
+    grad_x_k = np.dot(grad, d_k)
+    left, right = 0, np.inf
+
+    for i in range(max_iter):
+        x_new = x_k + a * d_k
+        f_new = f(x_new)
+        grad_new = gradient(f, x_new)
+        grad_new_d = np.dot(grad_new, d_k)
+
+        if f_new > f_x_k + c_1 * a * grad_x_k:
+            right = a
+            a = (left + right) / 2
+        elif grad_new_d < c_2 * grad_x_k:
+            left = a
+            a = 2 * a if right == np.inf else (left + right) / 2
+        else:
+            print(a)
+            return a, i
+
+    print(a)
+    return a, max_iter
 
 
 def newton_method_dichotomy(f, f_sympy, variables, x0, max_iter=100, eps=1e-6):
@@ -82,7 +108,8 @@ def newton_method_dichotomy(f, f_sympy, variables, x0, max_iter=100, eps=1e-6):
             H += 1e-5 * np.eye(len(x))
             direction = np.linalg.solve(H, -grad)
 
-        alpha = dichotomy_step(f, x, direction)
+        alpha, _ = wolfe_step(f, x, grad, direction)
+        # alpha = dichotomy_step(f, x, direction)
         x = x + alpha * direction
 
     print(f"Newton method with dichotomy: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}")
