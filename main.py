@@ -55,6 +55,54 @@ def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=100, eps=1e
     return x
 
 
+def bfgs_method(f, x0, max_iter=100, eps=1e-6):
+    n = len(x0)
+    H = np.eye(n)  # Начальное приближение обратной матрицы Гессиана
+    x = x0.copy()
+    tracker = Tracker()
+    
+    for k in range(max_iter):
+        grad = gradient(f, x, tracker)
+        
+        # Критерий остановки
+        if np.linalg.norm(grad) < eps:
+            break
+            
+        # Направление спуска
+        direction = -H @ grad
+        
+        # Выбор шага с помощью золотого сечения
+        alpha = golden_section(f, 0, 1, x, direction)
+        
+        # Обновление точки
+        x_new = x + alpha * direction
+        
+        # Вычисление изменений
+        grad_new = gradient(f, x_new, tracker)
+        y = grad_new - grad
+        s = x_new - x
+        
+        # Проверка условия кривизны (должно выполняться y.T @ s > 0)
+        if y.T @ s <= 0:
+            # Если условие не выполняется, пропускаем обновление H
+            x = x_new
+            continue
+            
+        # Обновление матрицы H по формуле BFGS
+        rho = 1.0 / (y.T @ s)
+        I = np.eye(n)
+        term1 = I - rho * np.outer(s, y)
+        term2 = I - rho * np.outer(y, s)
+        H = term1 @ H @ term2 + rho * np.outer(s, s)
+        
+        tracker.h += 1  # Учитываем обновление приближения Гессиана
+        x = x_new
+    
+    print(f"BFGS method: iterations: {k}, grad: {tracker.g}, hess_updates: {tracker.h}")
+    return x
+
+
+
 x, y = sp.symbols('x y')
 rosenbrock_sympy = 100 * (y - x ** 2) ** 2 + (1 - x) ** 2
 himmelblau_sympy = (x ** 2 + y - 11) ** 2 + (x + y**2 - 7) ** 2
@@ -75,12 +123,15 @@ def f(x):
 x0 = np.array([-1.5, 1.5])
 
 test_func = [
-    ("Rosenbrock", rosenbrock, rosenbrock_sympy, x0, 100),
-    ("Himmelblau", himmelblau, himmelblau_sympy, x0, 100),
-    ("Func", f, f_sympy, x0, 100)
+    ("Rosenbrock", rosenbrock, rosenbrock_sympy, x0, 1000),
+    ("Himmelblau", himmelblau, himmelblau_sympy, x0, 1000),
+    ("Func", f, f_sympy, x0, 1000),
+
 ]
 
 for func_name, func, func_sympy, start_point, max_iter in test_func:
+    tracker = Tracker()
+    print("newton_method_golden_section")
     x_min = newton_method_golden_section(
         func, 
         func_sympy,
@@ -89,7 +140,14 @@ for func_name, func, func_sympy, start_point, max_iter in test_func:
         max_iter=max_iter
     )
     print_result(func_name, x_min)
-    
+
+print("==============CUSTOM BFGS METHOD==============")
+for func_name, func, func_sympy, start_point, max_iter in test_func:
+    print("-" * 50)
+    x_min = bfgs_method(func, start_point, max_iter=max_iter)
+    print_result(f"Custom BFGS ({func_name})", x_min)
+    print(f"Function value: {func(x_min):.6f}")
+    print("-" * 50)
 
 
 # x0 = np.array([-15, 15])
