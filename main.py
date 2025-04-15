@@ -39,6 +39,11 @@ def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=100, eps=1e
             break
 
         H = hessian_func(x, tracker)
+
+        min_eigval = np.linalg.eigvals(H).min()
+        if min_eigval <= 0:
+            H += (abs(min_eigval) + 1e-5) * np.eye(len(x)) 
+
         try:
             direction = np.linalg.solve(H, -grad)
         except np.linalg.LinAlgError:
