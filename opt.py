@@ -14,10 +14,10 @@ def himmelblau(x):
 
 
 def quadratic(x):
-    return 1000 * (x[0] ** 2) + x[1] ** 2
+    return 1000 * x[0] ** 2 + x[1] ** 2
 
 
-x0 = np.array([-1.5, 1.5])
+x0_range = [-10.0, 10.0]
 
 test_functions = [
     ("Rosenbrock", rosenbrock),
@@ -44,6 +44,11 @@ for func_name, func in test_functions:
 
 
         def objective(trial):
+            x0 = np.array([
+                trial.suggest_float('x0_0', x0_range[0], x0_range[1]),
+                trial.suggest_float('x0_1', x0_range[0], x0_range[1])
+            ])
+
             if method_name == "GD_constant":
                 step = trial.suggest_float('step', 1e-6, 1.0, log=True)
                 eps = trial.suggest_float('eps', 1e-8, 1e-4, log=True)
@@ -86,13 +91,14 @@ for func_name, func in test_functions:
 
 
         study = optuna.create_study(direction='minimize')
-        study.optimize(objective, n_trials=50)
+        study.optimize(objective, n_trials=100)
 
         best_params[func_name][method_name] = study.best_params
         print(f"Best params: {study.best_params}")
         print(f"Best value: {study.best_value}")
 
 print("\n=== Testing with optimized parameters ===")
+x0_test = np.array([-1.5, 1.5])
 for func_name, func in test_functions:
     print(f"\nFunction: {func_name}")
 
@@ -100,39 +106,41 @@ for func_name, func in test_functions:
         params = best_params[func_name][method_name]
         print(f"\nMethod: {method_name}")
 
+        # x0_test = np.array([params['x0_0'], params['x0_1']])
+
         if method_name == "GD_constant":
-            x_min = method(func, x0.copy(),
+            x_min = method(func, x0_test.copy(),
                            step=params['step'],
                            max_iter=params['max_iter'],
                            eps=params['eps'])
 
         elif method_name == "GD_decreasing":
-            x_min = method(func, x0.copy(),
+            x_min = method(func, x0_test.copy(),
                            step=params['init_step'],
                            max_iter=params['max_iter'],
                            eps=params['eps'])
 
         elif method_name == "GD_armijo":
-            x_min = method(func, x0.copy(),
+            x_min = method(func, x0_test.copy(),
                            step=params['init_step'],
                            max_iter=params['max_iter'],
                            eps=params['eps'])
 
         elif method_name == "GD_wolfe":
-            x_min = method(func, x0.copy(),
+            x_min = method(func, x0_test.copy(),
                            step=params['init_step'],
                            max_iter=params['max_iter'],
                            eps=params['eps'])
 
         elif method_name == "GD_golden":
-            x_min = method(func, x0.copy(),
+            x_min = method(func, x0_test.copy(),
                            a=params['a'],
                            b=params['b'],
                            max_iter=params['max_iter'],
                            eps=params['eps'])
 
         elif method_name == "GD_dichotomy":
-            x_min = method(func, x0.copy(),
+            x_min = method(func, x0_test.copy(),
                            a=params['a'],
                            b=params['b'],
                            max_iter=params['max_iter'],
@@ -140,6 +148,7 @@ for func_name, func in test_functions:
 
         print_result(method_name, x_min)
         print(f"Function value: {func(x_min):.6f}")
+        print(f"Start point: {x0_test}")
 
 '''
 x, y = sp.symbols('x y')
