@@ -53,14 +53,13 @@ def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=100, eps=1e
         # print("alpha: ", alpha)
         x = x + alpha * direction
 
-    ###
     # print(f"Newton method with golden section: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}")
     return x
 
 
 def bfgs_method(f, x0, max_iter=100, eps=1e-6):
     n = len(x0)
-    H = np.eye(n)  # Начальное приближение обратной матрицы Гессиана
+    H = np.eye(n)
     x = x0.copy()
     tracker = Tracker()
     
@@ -71,36 +70,29 @@ def bfgs_method(f, x0, max_iter=100, eps=1e-6):
         if np.linalg.norm(grad) < eps:
             break
             
-        # Направление спуска
         direction = -H @ grad
         
-        # Выбор шага с помощью золотого сечения
         alpha = golden_section(f, 0, 1, x, direction)
         
-        # Обновление точки
         x_new = x + alpha * direction
         
-        # Вычисление изменений
         grad_new = gradient(f, x_new, tracker)
         y = grad_new - grad
         s = x_new - x
         
-        # Проверка условия кривизны (должно выполняться y.T @ s > 0)
         if y.T @ s <= 0:
-            # Если условие не выполняется, пропускаем обновление H
             x = x_new
             continue
             
-        # Обновление матрицы H по формуле BFGS
         rho = 1.0 / (y.T @ s)
         I = np.eye(n)
         term1 = I - rho * np.outer(s, y)
         term2 = I - rho * np.outer(y, s)
         H = term1 @ H @ term2 + rho * np.outer(s, s)
         
-        tracker.h += 1  # Учитываем обновление приближения Гессиана
+        tracker.h += 1
         x = x_new
-    ###
+
     # print(f"BFGS method: iterations: {k}, grad: {tracker.g}, hess_updates: {tracker.h}")
     return x
 
