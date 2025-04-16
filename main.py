@@ -44,11 +44,8 @@ def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=100, eps=1e
         if min_eigval <= 0:
             H += (abs(min_eigval) + 1e-5) * np.eye(len(x)) 
 
-        try:
-            direction = np.linalg.solve(H, -grad)
-        except np.linalg.LinAlgError:
-            H += 1e-5 * np.eye(len(x))
-            direction = np.linalg.solve(H, -grad)
+        direction = np.linalg.solve(H, -grad)
+    
 
         # alpha, _ = wolfe_step(f, x, grad, direction, tracker)
         # alpha = dichotomy_step(f, x, direction)
@@ -56,7 +53,8 @@ def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=100, eps=1e
         # print("alpha: ", alpha)
         x = x + alpha * direction
 
-    print(f"Newton method with golden section: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}")
+    ###
+    # print(f"Newton method with golden section: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}")
     return x
 
 
@@ -102,8 +100,8 @@ def bfgs_method(f, x0, max_iter=100, eps=1e-6):
         
         tracker.h += 1  # Учитываем обновление приближения Гессиана
         x = x_new
-    
-    print(f"BFGS method: iterations: {k}, grad: {tracker.g}, hess_updates: {tracker.h}")
+    ###
+    # print(f"BFGS method: iterations: {k}, grad: {tracker.g}, hess_updates: {tracker.h}")
     return x
 
 
