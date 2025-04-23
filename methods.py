@@ -1,5 +1,7 @@
 import numpy as np
 import sympy as sp
+
+
 def gradient(f, x, tracker, eps=1e-8):
     tracker.g = tracker.g + 1
     grad = np.zeros_like(x, dtype=float)
@@ -14,10 +16,11 @@ def gradient(f, x, tracker, eps=1e-8):
 def symbolic_hessian(f_sympy, variables):
     hess = sp.hessian(f_sympy, variables)
     hess_func = sp.lambdify(variables, hess, 'numpy')
+
     def wrapped(x, tracker):
         tracker.h = tracker.h + 1
         return np.array(hess_func(*x), dtype=float)
-    
+
     return wrapped
 
 
