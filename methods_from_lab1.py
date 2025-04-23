@@ -1,6 +1,5 @@
-import numpy as np
-from methods import gradient
-from main import Tracker
+from utils import *
+from methods import Tracker
 
 
 def gradient_descent_with_constant_step(f, x, step=0.001, max_iter=10000, eps=1e-6):
@@ -10,7 +9,7 @@ def gradient_descent_with_constant_step(f, x, step=0.001, max_iter=10000, eps=1e
         if np.linalg.norm(grad) < eps:
             break
         x = x - step * grad
-    print(f"gradient_descent_with_constant_step: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
+    print(f"gradient_descent_with_constant_step: iterations: {k+1}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
     return x
 
 
@@ -71,7 +70,7 @@ def gradient_descent_armijo(f, x, step=1.0, b=0.5, c=0.1, max_iter=10000, eps=1e
             break
         step = armijo_step(f, grad, x, tracker, step, b, c)
         x = x - step * grad
-    print(f"gradient_descent_armijo: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
+    print(f"gradient_descent_armijo: iterations: {k+1}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
     return x
 
 
@@ -83,7 +82,7 @@ def gradient_descent_wolfe(f, x, step=1.0, c1=0.1, c2=0.9, max_iter=10000, eps=1
             break
         step, cnt = wolfe_step(f, grad, x, tracker, step, c1, c2)  # cnt ??????
         x = x - step * grad
-    print(f"gradient_descent_wolfe: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
+    print(f"gradient_descent_wolfe: iterations: {k+1}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
     return x
 
 
@@ -120,7 +119,7 @@ def gradient_descent_with_golden_section(f, x, a=0, b=0.1, max_iter=10000, eps=1
             break
         step = golden_section(f, a, b, x, grad, tracker)
         x = x - step * grad
-    print(f"gradient_descent_with_golden_section: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
+    print(f"gradient_descent_with_golden_section: iterations: {k+1}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
     return x
 
 
@@ -152,7 +151,7 @@ def gradient_descent_dichotomy(f, x, a=0, b=0.1, max_iter=10000, eps=1e-6):
             break
         step = dichotomy_step(f, x, grad, tracker, a, b)
         x = x - step * grad
-    print(f"gradient_descent_dichotomy: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
+    print(f"gradient_descent_dichotomy: iterations: {k+1}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
     return x
 
 

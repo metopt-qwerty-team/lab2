@@ -1,4 +1,4 @@
-from methods import *
+from utils import *
 
 
 def dichotomy_step(f, x, direction, a=0, b=1, eps=1e-5, c=10):

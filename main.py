@@ -1,136 +1,5 @@
-from scipy.optimize import approx_fprime, minimize
-from steps import *
 from methods import *
-
-
-# def gradient(f, x, eps=1e-8):
-#     return approx_fprime(x, f, eps)
-
-class Tracker:
-    def __init__(self, g=0, h=0, f=0):
-        self._g = g
-        self._h = h
-        self._f = f
-
-    @property
-    def g(self):
-        return self._g
-
-    @property
-    def h(self):
-        return self._h
-
-    @property
-    def f(self):
-        return self._f
-
-    @g.setter
-    def g(self, value):
-        self._g = value
-
-    @h.setter
-    def h(self, value):
-        self._h = value
-
-    @f.setter
-    def f(self, value):
-        self._f = value
-
-
-def newton_method_wolfe_step(f, f_sympy, variables, x0, max_iter=1000, eps=1e-6):
-    tracker = Tracker()
-    hessian_func = symbolic_hessian(f_sympy, variables)
-
-    x = x0.copy()
-
-    iteration = 0
-
-    for k in range(max_iter):
-        grad = gradient(f, x, tracker)
-        if np.linalg.norm(grad) < eps:
-            break
-
-        H = hessian_func(x, tracker)
-
-        min_eigval = np.linalg.eigvals(H).min()
-        if min_eigval <= 0:
-            H += (abs(min_eigval) + 1e-5) * np.eye(len(x))
-
-        direction = np.linalg.solve(H, -grad)
-
-        alpha, i = wolfe_step(f, x, grad, direction, tracker)
-        iteration += i
-        x = x + alpha * direction
-        iteration += 1
-
-    print(
-        f"Newton method with wolfe rule: iterations: {iteration}, grad: {tracker.g}, hess: {tracker.h}, f: {tracker.f}")
-    return x
-
-
-def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=1000, eps=1e-6):
-    tracker = Tracker()
-    hessian_func = symbolic_hessian(f_sympy, variables)
-
-    x = x0.copy()
-
-    for k in range(max_iter):
-        grad = gradient(f, x, tracker)
-        if np.linalg.norm(grad) < eps:
-            break
-
-        H = hessian_func(x, tracker)
-
-        min_eigval = np.linalg.eigvals(H).min()
-        if min_eigval <= 0:
-            H += (abs(min_eigval) + 1e-5) * np.eye(len(x))
-
-        direction = np.linalg.solve(H, -grad)
-        alpha = golden_section(f, 0, 1, x, direction, tracker)
-        x = x + alpha * direction
-
-    print(f"Newton method with golden section: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
-    return x
-
-
-def bfgs_method(f, x0, max_iter=100, eps=1e-6):
-    tracker = Tracker()
-    n = len(x0)
-    H = np.eye(n)
-    x = x0.copy()
-
-    for k in range(max_iter):
-        grad = gradient(f, x, tracker)
-
-        if np.linalg.norm(grad) < eps:
-            break
-
-        direction = -H @ grad
-
-        alpha = golden_section(f, 0, 1, x, direction, tracker)
-
-        x_new = x + alpha * direction
-
-        grad_new = gradient(f, x_new, tracker)
-        y = grad_new - grad
-        s = x_new - x
-
-        if y.T @ s <= 0:
-            x = x_new
-            continue
-
-        rho = 1.0 / (y.T @ s)
-        I = np.eye(n)
-        term1 = I - rho * np.outer(s, y)
-        term2 = I - rho * np.outer(y, s)
-        H = term1 @ H @ term2 + rho * np.outer(s, s)
-
-        tracker.h += 1
-        x = x_new
-
-    print(f"BFGS method: iterations: {k}, grad: {tracker.g}, hess: {tracker.h}, f: {tracker.f}")
-    return x
-
+from methods_from_lab1 import *
 
 x, y = sp.symbols('x y')
 rosenbrock_sympy = 100 * (y - x ** 2) ** 2 + (1 - x) ** 2
@@ -151,16 +20,18 @@ def f(x):
 
 
 start_points = np.array([
-    [-4.0, -4.0],
-    [-4.0, 4.0],
-    [2.0, -4.0],
-    [15.0, -15.0]]
+    # [-4.0, -4.0]
+    # [-4.0, 4.0],
+    # [2.0, -4.0],
+    # [15.0, -15.0]
+    [1.5, 1.5]
+]
 )
 
 test_func = [
     ("Rosenbrock", rosenbrock, rosenbrock_sympy, start_points, 1000),
-    ("Himmelblau", himmelblau, himmelblau_sympy, start_points, 1000),
-    ("1000x^2 + y^2", f, f_sympy, start_points, 1000),
+    # ("Himmelblau", himmelblau, himmelblau_sympy, start_points, 1000),
+    # ("1000x^2 + y^2", f, f_sympy, start_points, 1000),
 ]
 
 for func_name, func, func_sympy, start_point, max_iter in test_func:
@@ -201,31 +72,6 @@ for func_name, func, func_sympy, start_points, max_iter in test_func:
 
 x0 = np.array([-15, 15])
 
-
-def scipy_newton_cg(f, x0, eps=1e-6, max_iter=100):
-    res = minimize(f, x0, method='Newton-CG',
-                   jac=lambda x: gradient(f, x, Tracker()),
-                   options={'xtol': eps})
-    print(f"Newton-CG: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}, hes: {res.nhev}")
-    return res.x
-
-
-def scipy_bfgs(f, x0, eps=1e-6, max_iter=100):
-    res = minimize(f, x0, method='BFGS',
-                   jac=lambda x: gradient(f, x, Tracker()),
-                   options={'gtol': eps})
-    print(f"BFGS: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}")
-    return res.x
-
-
-def scipy_lbfgs(f, x0, eps=1e-6, max_iter=100):
-    res = minimize(f, x0, method='L-BFGS-B',
-                   jac=lambda x: gradient(f, x, Tracker()),
-                   options={'ftol': eps})
-    print(f"L-BFGS: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}")
-    return res.x
-
-
 methods = [
     ("Newton-CG", scipy_newton_cg, [rosenbrock, himmelblau, f], x0),
     ("BFGS", scipy_bfgs, [rosenbrock, himmelblau, f], x0),
@@ -242,3 +88,29 @@ for name, method, functions, start_point in methods:
         print(f"Function value: {func(x_min):.6f} for function: {func.__name__}")
         print("-" * 25)
     print("-" * 50)
+
+print("=================GD METHODS======================")
+
+test_functions = [
+    ("Rosenbrock", rosenbrock),
+    # ("Himmelblau", himmelblau),
+    # ("1000x^2 + y^2", f)
+]
+
+methods = [
+    ("GD_constant", gradient_descent_with_constant_step),
+    ("GD_decreasing", gradient_descent_with_decreasing_step),
+    ("GD_armijo", gradient_descent_armijo),
+    ("GD_wolfe", gradient_descent_wolfe),
+    ("GD_golden", gradient_descent_with_golden_section),
+    ("GD_dichotomy", gradient_descent_dichotomy)
+]
+
+for func_name, func in test_functions:
+    for x0 in start_points:
+        for method_name, method in methods:
+            print(func_name, "start point:", x0)
+            result = method(func, x0.copy())
+            print(f"{method_name:20s} → minimum: [{result[0]:.8f}, {result[1]:.8f}] ")
+            print(f"Function value: {func(result):.6f}")
+            print("-" * 50)

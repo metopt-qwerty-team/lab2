@@ -1,28 +1,122 @@
-import numpy as np
-import sympy as sp
+from scipy.optimize import approx_fprime, minimize
+from steps import *
+from utils import *
 
 
-def gradient(f, x, tracker, eps=1e-8):
-    tracker.g = tracker.g + 1
-    grad = np.zeros_like(x, dtype=float)
-    for i in range(len(x)):
-        x1, x2 = np.array(x, dtype=float), np.array(x, dtype=float)
-        x1[i] += eps
-        x2[i] -= eps
-        grad[i] = (f(x1) - f(x2)) / (2 * eps)
-    return grad
+def newton_method_wolfe_step(f, f_sympy, variables, x0, max_iter=1000, eps=1e-6):
+    tracker = Tracker()
+    hessian_func = symbolic_hessian(f_sympy, variables)
+
+    x = x0.copy()
+
+    iteration = 0
+
+    for k in range(max_iter):
+        grad = gradient(f, x, tracker)
+        if np.linalg.norm(grad) < eps:
+            break
+
+        H = hessian_func(x, tracker)
+
+        min_eigval = np.linalg.eigvals(H).min()
+        if min_eigval <= 0:
+            H += (abs(min_eigval) + 1e-5) * np.eye(len(x))
+
+        direction = np.linalg.solve(H, -grad)
+
+        alpha, i = wolfe_step(f, x, grad, direction, tracker)
+        iteration += i
+        x = x + alpha * direction
+        iteration += 1
+
+    print(
+        f"Newton method with wolfe rule: iterations: {iteration}, grad: {tracker.g}, hess: {tracker.h}, f: {tracker.f}")
+    return x
 
 
-def symbolic_hessian(f_sympy, variables):
-    hess = sp.hessian(f_sympy, variables)
-    hess_func = sp.lambdify(variables, hess, 'numpy')
+def newton_method_golden_section(f, f_sympy, variables, x0, max_iter=1000, eps=1e-6):
+    tracker = Tracker()
+    hessian_func = symbolic_hessian(f_sympy, variables)
 
-    def wrapped(x, tracker):
-        tracker.h = tracker.h + 1
-        return np.array(hess_func(*x), dtype=float)
+    x = x0.copy()
 
-    return wrapped
+    for k in range(max_iter):
+        grad = gradient(f, x, tracker)
+        if np.linalg.norm(grad) < eps:
+            break
+
+        H = hessian_func(x, tracker)
+
+        min_eigval = np.linalg.eigvals(H).min()
+        if min_eigval <= 0:
+            H += (abs(min_eigval) + 1e-5) * np.eye(len(x))
+
+        direction = np.linalg.solve(H, -grad)
+        alpha = golden_section(f, 0, 1, x, direction, tracker)
+        x = x + alpha * direction
+
+    print(f"Newton method with golden section: iterations: {k}, grad: {tracker.g}, hes: {tracker.h}, f: {tracker.f}")
+    return x
 
 
-def print_result(method_name, result):
-    print(f"{method_name}: \t [{result[0]:.16f}, {result[1]:.16f}]")
+def bfgs_method(f, x0, max_iter=100, eps=1e-6):
+    tracker = Tracker()
+    n = len(x0)
+    H = np.eye(n)
+    x = x0.copy()
+
+    for k in range(max_iter):
+        grad = gradient(f, x, tracker)
+
+        if np.linalg.norm(grad) < eps:
+            break
+
+        direction = -H @ grad
+
+        alpha = golden_section(f, 0, 1, x, direction, tracker)
+
+        x_new = x + alpha * direction
+
+        grad_new = gradient(f, x_new, tracker)
+        y = grad_new - grad
+        s = x_new - x
+
+        if y.T @ s <= 0:
+            x = x_new
+            continue
+
+        rho = 1.0 / (y.T @ s)
+        I = np.eye(n)
+        term1 = I - rho * np.outer(s, y)
+        term2 = I - rho * np.outer(y, s)
+        H = term1 @ H @ term2 + rho * np.outer(s, s)
+
+        tracker.h += 1
+        x = x_new
+
+    print(f"BFGS method: iterations: {k}, grad: {tracker.g}, hess: {tracker.h}, f: {tracker.f}")
+    return x
+
+
+def scipy_newton_cg(f, x0, eps=1e-6, max_iter=100):
+    res = minimize(f, x0, method='Newton-CG',
+                   jac=lambda x: gradient(f, x, Tracker()),
+                   options={'xtol': eps})
+    print(f"Newton-CG: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}, hes: {res.nhev}")
+    return res.x
+
+
+def scipy_bfgs(f, x0, eps=1e-6, max_iter=100):
+    res = minimize(f, x0, method='BFGS',
+                   jac=lambda x: gradient(f, x, Tracker()),
+                   options={'gtol': eps})
+    print(f"BFGS: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}")
+    return res.x
+
+
+def scipy_lbfgs(f, x0, eps=1e-6, max_iter=100):
+    res = minimize(f, x0, method='L-BFGS-B',
+                   jac=lambda x: gradient(f, x, Tracker()),
+                   options={'ftol': eps})
+    print(f"L-BFGS: {res.message}, iterations: {res.nit}, func calc: {res.nfev}, grad: {res.njev}")
+    return res.x
