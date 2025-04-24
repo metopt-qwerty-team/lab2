@@ -56,7 +56,6 @@ def plot_2d(func, trajectories, names, title, filename, x_range=(-5, 5), y_range
     plt.title(title)
     plt.legend()
 
-    # Сохранение и отображение
     plt.savefig(f'plots/{filename}_2d.png', dpi=300, bbox_inches='tight')
     plt.close()
 
