@@ -37,7 +37,7 @@ test_func = [
 for func_name, func, func_sympy, start_point, max_iter in test_func:
     for x0 in start_point:
         print("newton_method_golden_section", x0)
-        x_min = newton_method_golden_section(
+        x_min, _ = newton_method_golden_section(
             func,
             func_sympy,
             variables=[x, y],
@@ -49,7 +49,7 @@ for func_name, func, func_sympy, start_point, max_iter in test_func:
         print("-" * 50)
 
         print("newton_method_wolfe_step", x0)
-        x_min = newton_method_wolfe_step(
+        x_min, _ = newton_method_wolfe_step(
             func,
             func_sympy,
             variables=[x, y],
@@ -65,7 +65,7 @@ print("==============CUSTOM BFGS METHOD==============")
 for func_name, func, func_sympy, start_points, max_iter in test_func:
     for x0 in start_points:
         print("-" * 50)
-        x_min = bfgs_method(func, x0, max_iter=max_iter)
+        x_min, _ = bfgs_method(func, x0, max_iter=max_iter)
         print_result(f"Custom BFGS ({func_name})", x0)
         print("Min:", x_min)
         print(f"Function value: {func(x_min):.6f}")
