@@ -20,10 +20,10 @@ def f(x):
 
 
 start_points = np.array([
-    # [-4.0, -4.0]
-    # [-4.0, 4.0],
-    # [2.0, -4.0],
-    # [15.0, -15.0]
+    [-4.0, -4.0],
+    [-4.0, 4.0],
+    [2.0, -4.0],
+    [4.0, -2.0],
     [1.5, 1.5]
 ]
 )
@@ -99,7 +99,7 @@ test_functions = [
 
 methods = [
     ("GD_constant", gradient_descent_with_constant_step),
-    ("GD_decreasing", gradient_descent_with_decreasing_step),
+    # ("GD_decreasing", gradient_descent_with_decreasing_step),
     ("GD_armijo", gradient_descent_armijo),
     ("GD_wolfe", gradient_descent_wolfe),
     ("GD_golden", gradient_descent_with_golden_section),

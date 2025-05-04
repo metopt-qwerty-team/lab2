@@ -27,7 +27,7 @@ test_functions = [
 
 methods = [
     ("GD_constant", gradient_descent_with_constant_step),
-    ("GD_decreasing", gradient_descent_with_decreasing_step),
+    # ("GD_decreasing", gradient_descent_with_decreasing_step),
     ("GD_armijo", gradient_descent_armijo),
     ("GD_wolfe", gradient_descent_wolfe),
     ("GD_golden", gradient_descent_with_golden_section),
